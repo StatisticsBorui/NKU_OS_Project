@@ -13,8 +13,8 @@
 int kern_init(void) __attribute__((noreturn));
 void grade_backtrace(void);
 void test_exception_handler(void){
-    asm volatile(".word 0xFFFFFFFF");   //illegal instruction test
-    asm volatile("ebreak");     //breakpoint test
+    __asm__ __volatile__(".word 0xFFFFFFFF");   //illegal instruction test
+    __asm__ __volatile__("ebreak");     //breakpoint test
 }
 
 int kern_init(void) {

@@ -18,7 +18,7 @@ kern_entry:
     80200008:	a009                	j	8020000a <kern_init>
 
 000000008020000a <kern_init>:
-    asm volatile("ebreak");     //breakpoint test
+    __asm__ __volatile__("ebreak");     //breakpoint test
 }
 
 int kern_init(void) {
@@ -68,7 +68,7 @@ int kern_init(void) {
     test_exception_handler();
     8020004e:	ffff                	0xffff
     80200050:	ffff                	0xffff
-    asm volatile("ebreak");     //breakpoint test
+    __asm__ __volatile__("ebreak");     //breakpoint test
     80200052:	9002                	ebreak
     
     
