@@ -12,6 +12,10 @@
 
 int kern_init(void) __attribute__((noreturn));
 void grade_backtrace(void);
+void test_exception_handler(void){
+    asm volatile(".word 0xFFFFFFFF");   //illegal instruction test
+    asm volatile("ebreak");     //breakpoint test
+}
 
 int kern_init(void) {
     extern char edata[], end[];
@@ -32,6 +36,10 @@ int kern_init(void) {
     clock_init();  // init clock interrupt
 
     intr_enable();  // enable irq interrupt
+
+
+    test_exception_handler();
+    
     
     while (1)
         ;
