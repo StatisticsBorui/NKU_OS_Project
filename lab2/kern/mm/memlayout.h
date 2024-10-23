@@ -37,6 +37,7 @@ struct Page {
     uint64_t flags;                 // array of flags that describe the status of the page frame
     unsigned int property;          // the num of free block, used in first fit pm manager
     list_entry_t page_link;         // free list link
+    unsigned location;
 };
 
 /* Flags describing the status of a page frame */
