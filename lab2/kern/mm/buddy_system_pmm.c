@@ -104,18 +104,19 @@ buddy_system_free_pages(struct Page *base, size_t n) {
     unsigned size = p -> property;
     assert(flag + n <= size);
     struct Page *b = p;
-    for (; p != base + size; p ++) {
+    for (; p != b + size; p ++) {
         assert(!PageReserved(p) && !PageProperty(p));
         p->flags = 0;
         set_page_ref(p, 0);
     }
-    b->property = size;
+    //b->property = size;
     SetPageProperty(b);
     nr_free += size;
 
     if (list_empty(&free_list)) {
         list_add(&free_list, &(b->page_link));
-    } else {
+    } 
+    else {
         list_entry_t* le = &free_list;
         while ((le = list_next(le)) != &free_list) {
             p = le2page(le, page_link);
@@ -124,28 +125,32 @@ buddy_system_free_pages(struct Page *base, size_t n) {
                 break;
             } else if (list_next(le) == &free_list) {
                 list_add(le, &(b->page_link));
+                break;
             }
         }
-    }
-
+    } 
 
     while(1) {
         if (((b -> location / b -> property) & 1 )
-         && le2page(b -> page_link.prev,page_link) -> location == b -> location - size
+         && b -> page_link.prev != &free_list
+         && (le2page(b -> page_link.prev,page_link) -> location == b -> location - size)
          && (b-size) -> property == size) {
             p = b - size;
             p -> property *= 2;
             ClearPageProperty(b);
+            b -> property = 0;
             list_del(&(b -> page_link));
             b = p;
             size *= 2;
         }
         else if (!((b -> location / b -> property) & 1 )
-         && le2page(b -> page_link.next,page_link) -> location == b -> location + size
-         && (b+size) -> property == size) {
+         && b -> page_link.next != &free_list
+         && (le2page(b -> page_link.next,page_link) -> location == b -> location + size)
+         && ((b+size) -> property == size)) {
             p = b + size;
             b -> property *= 2;
             ClearPageProperty(p);
+            p -> property = 0;
             list_del(&(p -> page_link));
             size *= 2;
          }
@@ -174,7 +179,7 @@ basic_check(void) {
     assert(page2pa(p0) < npage * PGSIZE);
     assert(page2pa(p1) < npage * PGSIZE);
     assert(page2pa(p2) < npage * PGSIZE);
-
+    
     list_entry_t free_list_store = free_list;
     list_init(&free_list);
     assert(list_empty(&free_list));
@@ -183,7 +188,6 @@ basic_check(void) {
     nr_free = 0;
 
     assert(alloc_page() == NULL);
-    
     free_page(p0);
     free_page(p1);
     free_page(p2);
@@ -225,13 +229,17 @@ buddy_system_check(void) {
         count ++, total += p->property;
     }
     assert(total == nr_free_pages());
-
+    
     basic_check();
 
-    /*
-    struct Page *p0 = alloc_pages(5), *p1, *p2;
+
+    struct Page *p0 = alloc_pages(7), *p1 = alloc_pages(13), *p2 = alloc_pages(5);
     assert(p0 != NULL);
     assert(!PageProperty(p0));
+    assert(p1 != NULL);
+    assert(!PageProperty(p1));
+    assert(p2 != NULL);
+    assert(!PageProperty(p2));
 
     list_entry_t free_list_store = free_list;
     list_init(&free_list);
@@ -241,34 +249,47 @@ buddy_system_check(void) {
     unsigned int nr_free_store = nr_free;
     nr_free = 0;
 
-    free_pages(p0 + 2, 3);
-    assert(alloc_pages(4) == NULL);
-    assert(PageProperty(p0 + 2) && p0[2].property == 3);
-    assert((p1 = alloc_pages(3)) != NULL);
-    assert(alloc_page() == NULL);
-    assert(p0 + 2 == p1);
+    free_pages(p0,2);
+    assert(!list_empty(&free_list));
+    free_pages(p1,5);
 
-    p2 = p0 + 1;
-    free_page(p0);
-    free_pages(p1, 3);
-    assert(PageProperty(p0) && p0->property == 1);
-    assert(PageProperty(p1) && p1->property == 3);
 
-    assert((p0 = alloc_page()) == p2 - 1);
-    free_page(p0);
-    assert((p0 = alloc_pages(2)) == p2 + 1);
-
-    free_pages(p0, 2);
-    free_page(p2);
-
-    assert((p0 = alloc_pages(5)) != NULL);
-    assert(alloc_page() == NULL);
-
+    assert(alloc_pages(18) == NULL);
+    assert(!list_empty(&free_list));
+    free_pages(p2,1);
+    
+    p0 = alloc_pages(18);
+    assert(p0 != NULL);
     assert(nr_free == 0);
-    nr_free = nr_free_store;
 
+    free_pages(p0 + 3, 3);
+    assert(nr_free == 32);
+
+
+    p0 = alloc_pages(14);
+    p1 = alloc_page();
+    p2 = alloc_pages(6);
+    assert(nr_free == 7);
+
+    free_page(p1 - 1);
+    assert(PageProperty(p0));
+    assert(nr_free == 23);
+    free_page(p2);
+    assert(nr_free == 31);
+    free_page(p1);
+    assert(nr_free == 32);
+
+    p0 = alloc_pages(7);
+    p1 = alloc_pages(13);
+    p2 = alloc_pages(5);
+
+    nr_free = nr_free_store;
     free_list = free_list_store;
-    free_pages(p0, 5);
+
+    free_page(p0);
+    free_page(p1);
+    free_page(p2);
+    
 
     le = &free_list;
     while ((le = list_next(le)) != &free_list) {
@@ -276,7 +297,8 @@ buddy_system_check(void) {
         count --, total -= p->property;
     }
     assert(count == 0);
-    assert(total == 0);*/
+    assert(total == 0);
+
 }
 //这个结构体在
 const struct pmm_manager buddy_system_pmm_manager = {
