@@ -79,6 +79,10 @@ _clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tic
      //(2)  set the addr of addr of this page to ptr_page
 
      list_entry_t *curr = head -> next;
+
+     if (curr == head){
+        return -1;
+     }
     while (1) {
         /*LAB3 EXERCISE 4: 2111511*/ 
         // 编写代码
@@ -99,10 +103,12 @@ _clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tic
         }
 
         curr = curr -> next;
-
+        if(curr == head){
+            curr = curr -> next;
+        }
 
     }
-    return 0;
+    return -1;
 }
 static int
 _clock_check_swap(void) {
