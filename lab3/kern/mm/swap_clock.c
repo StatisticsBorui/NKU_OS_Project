@@ -78,9 +78,9 @@ _clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tic
      //(1)  unlink the  earliest arrival page in front of pra_list_head qeueue
      //(2)  set the addr of addr of this page to ptr_page
 
-     list_entry_t *curr = head -> next;
+     curr_ptr = head -> next;
 
-     if (curr == head){
+     if (curr_ptr == head){
         return -1;
      }
     while (1) {
@@ -91,10 +91,11 @@ _clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tic
         // 如果当前页面未被访问，则将该页面从页面链表中删除，并将该页面指针赋值给ptr_page作为换出页面
         // 如果当前页面已被访问，则将visited标志置为0，表示该页面已被重新访问
 
-        struct Page *page = le2page(curr,pra_page_link);
+        struct Page *page = le2page(curr_ptr,pra_page_link);
 
         if(page -> visited == 0){
-            list_del(curr);
+            cprintf("curr_ptr 0xffffffff%08x\n", curr_ptr);
+            list_del(curr_ptr);
             *ptr_page = page;
             return 0;
         }
@@ -102,11 +103,11 @@ _clock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tic
             page -> visited = 0;
         }
 
-        curr = curr -> next;
-        if(curr == head){
-            curr = curr -> next;
+        curr_ptr = curr_ptr -> next;
+        if(curr_ptr == head){
+            curr_ptr = curr_ptr -> next;
         }
-
+        
     }
     return -1;
 }
