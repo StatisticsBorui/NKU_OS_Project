@@ -316,6 +316,7 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     if ((proc = alloc_proc()) == NULL) {
         goto fork_out;
     }
+    proc -> parent = current;
     //    2. call setup_kstack to allocate a kernel stack for child process
     if(setup_kstack(proc) != 0){
         goto bad_fork_cleanup_proc;
